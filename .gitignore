@@ -1,0 +1,7 @@
+# Data files
+*tar.gz
+*xslx
+*DS_Store
+
+# Config
+config.yml
