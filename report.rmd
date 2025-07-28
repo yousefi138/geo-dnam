@@ -1,6 +1,6 @@
 ---
-title: "Template"
-subtitle: "Analysis"
+title: "GEO DNAm Data"
+subtitle: "Extract all 450k, EPIC, EPICv2 datasets"
 date: "`r format(Sys.time(), '%d %B %Y')`"
 author: Paul Yousefi
 output:
@@ -28,7 +28,11 @@ sourcecode <- grep("analysis.r$",
 read_chunk(file.path(path, sourcecode))
 ```
 
-# Load data 
+# Purpose
+
+To identify and access all available DNAm datasets provided by the Gene Expression Omnibus (GEO) https://www.ncbi.nlm.nih.gov/geo/.  
+
+While addition eligibility criteria are discussed further below, datasets needed to have been run in humans on an omic-level DNA methylation microarray (450k, EPIC, EPICv2) to have even been considered. 
 
 ```{r globals, results = 'hide'}
 ```
