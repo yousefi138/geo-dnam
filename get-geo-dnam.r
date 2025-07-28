@@ -48,7 +48,7 @@ eval.save({
 
 }, "filenames", redo=F)
 filenames <- eval.ret("filenames")
-gses$filenames <- filenames
+gses$filenames <- ifelse(filenames == "", NA, filenames)
 
 ## ----get.pmids -------------------------------------------------------------
 eval.save({
@@ -63,8 +63,9 @@ series <- lapply(series, function(i){
 	keep <- c(grep("accession", names(i)), grep("pubmed", names(i)))[1:2]
 	i[keep]
 })
-series<- as.data.frame(do.call(rbind, series), 
+series <- as.data.frame(do.call(rbind, series), 
 				stringsAsFactors = F)
+names(series)[names(series) == "pubmed_id"] <- "pmid"
 
 ## add pmids to gses
 gses <- merge(gses, series, 
@@ -128,20 +129,15 @@ gses <- cbind(gses, dnam)
 
 ## ----pubmed -------------------------------------------------------------
 eval.save({
-	pubmed <- retrieve.papers(gses$pubmed_id) 
-}, "pubmed", redo=F)
+	pubmed <- retrieve.papers(gses$pmid) 
+}, "pubmed", redo=T)
 pubmed <- eval.ret("pubmed")
 
-pubmed <- pubmed |>
-		rename(pub.title = title) %>%
-		left_join(gses, ., by = c("pubmed_id" = "pmid")) |>
-		select(c(all_of(c("accession", "title", 
-					"description", "organism", 
-					"type", "platform", "id",
-					"samples", "class", "nrow", 
-					"ncol", "pubmed_id", 
-					"pub.title", "abstract")), 
-				starts_with("chr.fld")))
+gses <- pubmed |>
+		rename(pub.title = title) |>
+		select(all_of(c("pmid", 
+					"pub.title", "abstract")))  %>%
+		left_join(gses, ., by = c("pmid"))
 
 ## ----write.gses -------------------------------------------------------------
 data.table::fwrite(gses, 
