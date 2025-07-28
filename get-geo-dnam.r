@@ -24,7 +24,7 @@ c("series.files", "dnam") |>
   })
 
 ## source py written functions
-source(file.path(dir$scripts, "src/get.characteristics.r"))
+#source(file.path(dir$scripts, "src/get.characteristics.r"))
 source(file.path(dir$scripts, "src/retrieve.papers.r"))
 
 ## ----gses -------------------------------------------------------------
@@ -77,17 +77,6 @@ gses <- merge(gses, series,
               by.y="geo_accession",
               all.x =T)
 
-## ----get.chars -------------------------------------------------------------
-# eval.save({
-# 
-# 	chars <- get.characteristics(gses$filenames)
-# 
-# }, "chars", redo=F)
-# chars <- eval.ret("chars")
-# 
-# gses <- cbind(gses, 
-# 			chars$chr.tabs)
-# 
 ## ----get.data -------------------------------------------------------------
 eval.save({
   dnam <- 
@@ -175,6 +164,41 @@ supp.files[gses$accession == "GSE54882"] = "GSE54882_processed_methylation_matri
 stopifnot(all(sapply(supp.files,length) <= 1))
 
 gses$supp.file = sapply(supp.files,function(txt) if (length(txt) == 0) "" else unlist(txt))
+
+# ----blood.pred -------------------------------------------------------------
+## retrieve sample info for each dataset
+eval.save({
+  mclapply(1:nrow(gses), function(i) {
+    ret = NULL
+    	try({
+        ret = geograbi.get.samples(gses$filename[i])
+      })
+      ret
+    })
+}, "samples", redo=F)
+samples <- eval.ret("samples")
+
+## extract just the info on sample source
+source <- mclapply(samples, function(i){
+		i$source_name_ch1
+})
+
+omit.patterns <- paste0("(",paste(c("tumour","spot","tumor", "cancer", "placenta","tissue"),collapse="|"),")")
+keep.patterns <- paste0("(",paste(c("blood", "PBMC"),collapse="|"),")")
+ 
+## uses patterns to guess if the source is likely to be  peripheral blood
+blood.pred = sapply(source, function(samp) {
+	keep = NA
+  if (length(samp) > 0) {
+    keep = !grepl(omit.patterns,samp,ignore.case=T) & grepl(keep.patterns,samp,ignore.case=T)
+  }
+  keep
+})
+gses$blood.pred = sapply(blood.pred, all)
+
+## check on count
+#sum(gses[gses$blood.pred == TRUE & !is.na(gses$blood.pred), "ncol"])
+# [1] 48357
 
 ## ----pubmed -------------------------------------------------------------
 eval.save({
