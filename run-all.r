@@ -10,15 +10,14 @@ print(paths)
 paths$data <- file.path(paths$project, "data")
 paths$output <- file.path(paths$project, "results")
 paths$cache <- file.path(paths$project, "results", "analysis-cache")
-paths$scripts <- file.path(paths$project, "scripts")
+paths$scripts <- file.path(paths$project, "scripts", "geo-dnam")
 print(paths)
 
 ## 
 ## in:
 ## out:
-#source("example.r", echo=T, max.deparse.length = 500)
 #system("R CMD BATCH --vanilla example.r")
-
+source("get-geo-dnam.r", echo=T, max.deparse.length = 500)
 
 ## run analysis looking at relationship between
 ## methylation predicted proteins and 
