@@ -85,7 +85,7 @@ gses <- merge(gses, series,
 ## ----get.data -------------------------------------------------------------
 eval.save({
 	dnam <- 
-		map2(gses$filenames, gses$accession, ~ {
+		purr::map2(gses$filenames, gses$accession, ~ {
 						path <- file.path(dir$output, "dnam")		
 						ret <-tryCatch(geograbi.get.data(filename = .x,
 										gse = .y,
@@ -102,31 +102,35 @@ eval.save({
 								paste(tolower(gse), "csv.gz", sep="."))
 							ret <- as.data.frame(data.table::fread(data.filename))
 						}
-						c(class(ret), dim(ret), length(ret))
+						c(class(ret)[1], dim(ret), length(ret))
 		})
 }, "dnam", redo=T)
 dnam <- eval.ret("dnam")
 
+# make a nice summry data frame of  the success status of the download
+names(dnam) <- gses$accession
+dnam <- lapply(dnam, function(i){
+				if (any(grepl("Error|numeric", i))) {
+					c("error", rep("0",3))
+				} else i
+			})
+dnam <- do.call(rbind, dnam)
+identical(gses$accession, rownames(dnam))
 
+colnames(dnam) <- c("class", "nrow", "ncol", "length")
+dnam <- data.frame(dnam, stringsAsFactors = F)
+dnam[grep("[0-9]", dnam[1,])] <- 
+						lapply(dnam[grep("[0-9]", 
+							dnam[1,])], as.numeric)
 
-	# make a nice summry data frame of  the success status of the download
-	names(geo.data) <- ecat.gses$accession
-	geo.data <- lapply(geo.data, function(i){
-					if (any(grepl("Error|numeric", i))) {
-						c("error", rep("0",3))
-					} else i
-				})
+gses <- cbind(gses, dnam)
 
-	geo.data <- do.call(rbind, geo.data)
-	identical(ecat.gses$accession, rownames(geo.data))
+## ----save.gse.info -------------------------------------------------------------
+data.table::fwrite(gses, 
+	file.path(dir$output, "gses.csv"),
+	quote = F, row.names = F)
 
-	colnames(geo.data) <- c("class", "nrow", "ncol", "length")
-	geo.data <- data.frame(geo.data, stringsAsFactors = F)
-	geo.data[grep("[0-9]", geo.data[1,])] <- 
-							lapply(geo.data[grep("[0-9]", 
-								geo.data[1,])], as.numeric)
-
-	ecat.data <- cbind(ecat.gses, geo.data)
+## ---- -------------------------------------------------------------
 
 
 
