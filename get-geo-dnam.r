@@ -184,7 +184,7 @@ source <- mclapply(samples, function(i){
 })
 
 omit.patterns <- paste0("(",paste(c("tumour","spot","tumor", "cancer", "placenta","tissue"),collapse="|"),")")
-keep.patterns <- paste0("(",paste(c("blood", "PBMC"),collapse="|"),")")
+keep.patterns <- paste0("(",paste(c("blood", "WB", "PBMC"),collapse="|"),")")
  
 ## uses patterns to guess if the source is likely to be  peripheral blood
 blood.pred = sapply(source, function(samp) {
@@ -196,6 +196,11 @@ blood.pred = sapply(source, function(samp) {
 })
 gses$blood.pred = sapply(blood.pred, all)
 
+table(gses$blood.pred, useNA = "ifany")
+#FALSE  TRUE  <NA> 
+#  355   120   201 
+
+#str(source[which(gses$blood.pred==F)])
 ## check on count
 #sum(gses[gses$blood.pred == TRUE & !is.na(gses$blood.pred), "ncol"])
 # [1] 48357
