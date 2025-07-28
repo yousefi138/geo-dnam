@@ -130,7 +130,7 @@ gses <- cbind(gses, dnam)
 ## ----pubmed -------------------------------------------------------------
 eval.save({
 	pubmed <- retrieve.papers(gses$pmid) 
-}, "pubmed", redo=T)
+}, "pubmed", redo=F)
 pubmed <- eval.ret("pubmed")
 
 gses <- pubmed |>
@@ -142,4 +142,5 @@ gses <- pubmed |>
 ## ----write.gses -------------------------------------------------------------
 data.table::fwrite(gses, 
 	file.path(dir$output, "gses.csv"),
-	row.names = F)
+	row.names = F,
+	na = "NA")
