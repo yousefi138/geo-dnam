@@ -1,8 +1,9 @@
 ## ----globals -------------------------------------------------------------
 packages <- c("geograbi", # https://github.com/yousefi138/geograbi
             "eval.save",
-			"purrr") # for map2)
-            #"easyPubMed","tidyverse")
+			"purrr", # for map2)
+            "easyPubMed",
+			"dplyr")
 lapply(packages, require, character.only=T)
 
 # set dirs  
@@ -33,7 +34,7 @@ eval.save({
 						subset(organism =="Homo sapiens") |>
 						subset(samples >100)
 
-}, "gses", redo=T)
+}, "gses", redo=F)
 gses <- eval.ret("gses")
 
 ## ----series.files -------------------------------------------------------------
@@ -104,7 +105,7 @@ eval.save({
 						}
 						c(class(ret)[1], dim(ret), length(ret))
 		})
-}, "dnam", redo=T)
+}, "dnam", redo=F)
 dnam <- eval.ret("dnam")
 
 # make a nice summry data frame of  the success status of the download
@@ -125,12 +126,24 @@ dnam[grep("[0-9]", dnam[1,])] <-
 
 gses <- cbind(gses, dnam)
 
-## ----save.gse.info -------------------------------------------------------------
+## ----pubmed -------------------------------------------------------------
+eval.save({
+	pubmed <- retrieve.papers(gses$pubmed_id) 
+}, "pubmed", redo=F)
+pubmed <- eval.ret("pubmed")
+
+gses <- pubmed |>
+		rename(pub.title = title) %>%
+		left_join(gses, ., by = c("pubmed_id" = "pmid")) |>
+		select(c(all_of(c("accession", "title", 
+					"description", "organism", 
+					"type", "platform", "id",
+					"samples", "class", "nrow", 
+					"ncol", "pubmed_id", 
+					"pub.title", "abstract")), 
+				starts_with("chr.fld")))
+
+## ----write.gses -------------------------------------------------------------
 data.table::fwrite(gses, 
 	file.path(dir$output, "gses.csv"),
 	quote = F, row.names = F)
-
-## ---- -------------------------------------------------------------
-
-
-
