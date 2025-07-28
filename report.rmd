@@ -23,7 +23,7 @@ cache=FALSE)
 
 ```{r call_source, echo = F}
 path <- "."
-sourcecode <- grep("analysis.r$", 
+sourcecode <- grep("report.r$", 
 	list.files(path), value = T)
 read_chunk(file.path(path, sourcecode))
 ```
@@ -39,3 +39,27 @@ While addition eligibility criteria are discussed further below, datasets needed
 
 ```{r load.data}
 ```
+
+
+# Methods
+
+Used functions included in the `geograbi` package to query and extract all data hosted on GEO
+
+Used `geograbi.retrieve.datasets()` to query GEO for experiment records meeting the following selection criteria:
+
+* Human subjects
+* DNAm array data available on an omic-level platform (450k, EPIC, EPICv2)
+* N >100
+
+### Human DNAm Array experiments with N>100
+
+N = `r nrow(gses)` experiments meeting our inclusion criteria
+
+* Of those, N = `r sum(!is.na(gses$filenames))` had a GEO series matrix file, which contains all array, sample and series data for a given experiment, downloadable by `geograbi`
+
+* N = `r sum(gses$class != "error")` series matrix files could be contacted and potentially extracted using `geograbi.get.data()`
+
+	* Occasionally, methylation information is stored in a supplementary file, but retrieval of these was not explored. 
+	
+	* Manual exception processing can be performed but has not yet been implemented.
+

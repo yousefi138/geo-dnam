@@ -11,9 +11,9 @@
 
 <meta name="author" content="Paul Yousefi" />
 
-<meta name="date" content="2025-05-23" />
+<meta name="date" content="2025-07-28" />
 
-<title>Template</title>
+<title>GEO DNAm Data</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -326,59 +326,7 @@ code span.wa { color: #8f5902; font-weight: bold; font-style: italic; }
 
 
 
-<style type="text/css">.gdbar img, img.gdbar {
-width: 236px !important;
-height: 69px !important;
-margin: 8px 8px;
-}
-.gdbar {
-width: 350px !important;
-height: 85px !important;
-}
-slides > slide:not(.nobackground):before {
-width: 97px;
-height: 28px;
-background-size: 97px 28px;
-}
-table,
-.table-condensed,
-table.rmdtable {
-width: auto;
-margin-right: auto;
-}
-table,
-.table-condensed,
-table.rmdtable,
-table.rmdtable .header th,
-.table > thead > tr > th {
-border-collapse: collapse;
-border-style: solid;
-border-spacing: 0;
-border-width: medium 0 medium 0;
-border-color: inherit
-}
-table.rmdtable th,
-table.rmdtable td,
-table th,
-table.rmdtable tr > td:first-child,
-table.rmdtable .even {
-padding: 0.4em 0.5em;
-color: inherit;
-background: #FFF;
-font-weight: normal;
-}
-.table > tbody > tr > td {
-border-width: 0;
-}
-.entry { float: left; width: 100%;}
-.left {
-float: left;
-}
-.right {
-float: left;
-margin-left: 20px;
-}
-</style>
+<link rel="stylesheet" href="docs/style.css" type="text/css" />
 
 
 
@@ -475,26 +423,66 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">Template</h1>
-<h3 class="subtitle">Analysis</h3>
+<h1 class="title toc-ignore">GEO DNAm Data</h1>
+<h3 class="subtitle">Extract all 450k, EPIC, EPICv2 datasets</h3>
 <h4 class="author">Paul Yousefi</h4>
-<h4 class="date">23 May 2025</h4>
+<h4 class="date">28 July 2025</h4>
 
 </div>
 
 <div id="TOC">
 <ul>
-<li><a href="#load-data" id="toc-load-data">Load data</a></li>
+<li><a href="#purpose" id="toc-purpose">Purpose</a></li>
+<li><a href="#methods" id="toc-methods">Methods</a>
+<ul>
+<li><a href="#human-dnam-array-experiments-with-n100" id="toc-human-dnam-array-experiments-with-n100">Human DNAm Array
+experiments with N&gt;100</a></li>
+</ul></li>
 </ul>
 </div>
 
-<div id="load-data" class="section level1">
-<h1>Load data</h1>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>packages <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;dplyr&quot;</span>) </span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">lapply</span>(packages, require, <span class="at">character.only=</span>T)</span></code></pre></div>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">list.files</span>()</span></code></pre></div>
-<pre><code>&gt; [1] &quot;analysis.r&quot;   &quot;analysis.rmd&quot; &quot;config.yml&quot;   &quot;docs&quot;         &quot;README.md&quot;   
-&gt; [6] &quot;run-all.r&quot;</code></pre>
+<div id="purpose" class="section level1">
+<h1>Purpose</h1>
+<p>To identify and access all available DNAm datasets provided by the
+Gene Expression Omnibus (GEO) <a href="https://www.ncbi.nlm.nih.gov/geo/" class="uri">https://www.ncbi.nlm.nih.gov/geo/</a>.</p>
+<p>While addition eligibility criteria are discussed further below,
+datasets needed to have been run in humans on an omic-level DNA
+methylation microarray (450k, EPIC, EPICv2) to have even been
+considered.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>dir <span class="ot">&lt;-</span> paths</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>gses <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>            data.table<span class="sc">::</span><span class="fu">fread</span>(<span class="fu">file.path</span>(dir<span class="sc">$</span>output, <span class="st">&quot;gses.csv&quot;</span>), </span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>                            <span class="at">na.strings =</span> <span class="st">&quot;NA&quot;</span>))</span></code></pre></div>
+</div>
+<div id="methods" class="section level1">
+<h1>Methods</h1>
+<p>Used functions included in the <code>geograbi</code> package to query
+and extract all data hosted on GEO</p>
+<p>Used <code>geograbi.retrieve.datasets()</code> to query GEO for
+experiment records meeting the following selection criteria:</p>
+<ul>
+<li>Human subjects</li>
+<li>DNAm array data available on an omic-level platform (450k, EPIC,
+EPICv2)</li>
+<li>N &gt;100</li>
+</ul>
+<div id="human-dnam-array-experiments-with-n100" class="section level3">
+<h3>Human DNAm Array experiments with N&gt;100</h3>
+<p>N = 676 experiments meeting our inclusion criteria</p>
+<ul>
+<li><p>Of those, N = 475 had a GEO series matrix file, which contains
+all array, sample and series data for a given experiment, downloadable
+by <code>geograbi</code></p></li>
+<li><p>N = 475 series matrix files could be contacted and potentially
+extracted using <code>geograbi.get.data()</code></p>
+<ul>
+<li><p>Occasionally, methylation information is stored in a
+supplementary file, but retrieval of these was not explored.</p></li>
+<li><p>Manual exception processing can be performed but has not yet been
+implemented.</p></li>
+</ul></li>
+</ul>
+</div>
 </div>
 
 
