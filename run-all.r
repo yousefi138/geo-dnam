@@ -26,6 +26,6 @@ source("get-geo-dnam.r", echo=T, max.deparse.length = 500)
 packages <- c("rmarkdown", "knitr")
 lapply(packages, require, character.only=T)
 
-render("analysis.rmd", 
+render("report.rmd", 
 	output_format = "all",
     output_dir = "docs")
