@@ -50,13 +50,12 @@ filenames <- eval.ret("filenames")
 gses$filenames <- filenames
 
 ## ----get.pmids -------------------------------------------------------------
-
 eval.save({
 	## get pmids from series files
 	series <- lapply(na.omit(gses$filenames), geograbi.get.series) # 2mins
 	keep <-sapply(series, function(i) any(grepl("pubmed", names(i))))
 	series<- series[keep]
-}, "series", redo=T)
+}, "series", redo=F)
 series <- eval.ret("series")
 
 series <- lapply(series, function(i){
@@ -105,7 +104,7 @@ eval.save({
 						}
 						c(class(ret), dim(ret), length(ret))
 		})
-}, "dnam", redo=F)
+}, "dnam", redo=T)
 dnam <- eval.ret("dnam")
 
 
