@@ -10,7 +10,6 @@ print(paths)
 paths$data <- file.path(paths$project, "data")
 paths$output <- file.path(paths$project, "results")
 paths$cache <- file.path(paths$project, "results", "analysis-cache")
-paths$scripts <- file.path(paths$project, "scripts", "geo-dnam")
 print(paths)
 
 ## 
