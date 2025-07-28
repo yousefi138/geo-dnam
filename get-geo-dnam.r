@@ -132,7 +132,7 @@ eval.save({
 }, "pubmed", redo=F)
 pubmed <- eval.ret("pubmed")
 
-gses <- pubmed |>
+pubmed <- pubmed |>
 		rename(pub.title = title) %>%
 		left_join(gses, ., by = c("pubmed_id" = "pmid")) |>
 		select(c(all_of(c("accession", "title", 
@@ -146,4 +146,4 @@ gses <- pubmed |>
 ## ----write.gses -------------------------------------------------------------
 data.table::fwrite(gses, 
 	file.path(dir$output, "gses.csv"),
-	quote = F, row.names = F)
+	row.names = F)
