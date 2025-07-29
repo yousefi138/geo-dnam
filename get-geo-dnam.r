@@ -244,8 +244,8 @@ data.table::fwrite(
 
 # subset good blood query results
 blood.gses <- gses |>
-				subset(blood.pred == TRUE & !is.na(blood.pred)) |>
-        subset(nrow >300000) ## biggest drop off - many 0s
+  subset(blood.pred == TRUE & !is.na(blood.pred)) |>
+  subset(nrow >300000 | supp.file != "") ## biggest drop off - many 0s
 
 omit.list <- readLines("omit.txt")
 
@@ -254,3 +254,20 @@ data.table::fwrite(
   file.path(dir$output, "blood.gses.csv"),
   row.names = F,
   na = "NA")
+
+## sum(blood.gses$ncol)
+## [1] 44909
+
+## plus add these
+##     accession                              supp.file   nrow ncol blood.pred
+## 246 GSE191082 GSE191082_Normalized_data_Blood.txt.gz      0  158      FALSE 144 of which blood
+## 462  GSE40279                                        473035  656      FALSE whole blood
+## 469  GSE42861                                             0    0         NA PBL (n=689)
+## 479  GSE51032                                             0    0         NA buffy coat (n=845)
+## 480  GSE51057                                        485578  329      FALSE buffy coat 
+## 517  GSE59065        GSE59065_MatrixProcessed.csv.gz      0  296      FALSE 100 of which blood
+## 600  GSE74548                                        485513  174      FALSE buffy coat
+##      144+656+689+845+329+100+174=2937
+
+## total: 47846
+
