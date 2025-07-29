@@ -184,7 +184,7 @@ samples.file <- purrr::imap(samples, ~ {
 		if(!is.null(.x)){
 			file <- file.path(dir$output, "samples", 
 						paste0(tolower(.y), ".csv.gz"))
-			data.table::fwrite(.x, file)
+			if(!file.exists(file)) data.table::fwrite(.x, file)
 			file
 		} else NA
 }) 
@@ -231,10 +231,22 @@ gses <- pubmed |>
 
 
 ## ----write.gses -------------------------------------------------------------
+
+# full query results
+data.table::fwrite(
+  gses, 
+  file.path(dir$output, "gses.csv"),
+  row.names = F,
+  na = "NA")
+
+# subset good blood query results
+blood.gses <- gses |>
+				subset(blood.pred == TRUE & !is.na(blood.pred))
+
 omit.list <- readLines("omit.txt")
 
 data.table::fwrite(
-  gses[!gses$accession %in% omit.list,], 
-  file.path(dir$output, "gses.csv"),
+  blood.gses[!blood.gses$accession %in% omit.list,], 
+  file.path(dir$output, "blood.gses.csv"),
   row.names = F,
   na = "NA")
