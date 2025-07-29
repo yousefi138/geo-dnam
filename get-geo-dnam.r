@@ -119,6 +119,9 @@ dnam[grep("[0-9]", dnam[1,])] <-
                    dnam[1,])], as.numeric)
 
 gses <- cbind(gses, dnam)
+gses$dnam.file <- 
+		file.path(dir$output, "dnam", 
+          paste(tolower(gses$accession), "csv.gz", sep="."))	
 
 ## ----supplementary-files------------------------------------------------------
 
@@ -241,7 +244,8 @@ data.table::fwrite(
 
 # subset good blood query results
 blood.gses <- gses |>
-				subset(blood.pred == TRUE & !is.na(blood.pred))
+				subset(blood.pred == TRUE & !is.na(blood.pred)) |>
+        subset(nrow >300000) ## biggest drop off - many 0s
 
 omit.list <- readLines("omit.txt")
 
