@@ -16,7 +16,7 @@ if(!dir.exists(dir$cache)) dir.create(dir$cache)
 eval.save.dir(dir$cache)
 
 ## check or make all output dirs
-c("series.files", "dnam") |>
+c("series.files", "dnam", "samples") |>
   sapply(function(.x){
     if (!dir.exists(file.path(dir$output,.x)))
       dir.create(file.path(dir$output,.x), recursive = T)
@@ -177,6 +177,18 @@ eval.save({
     })
 }, "samples", redo=F)
 samples <- eval.ret("samples")
+names(samples) <- gses$accession
+
+# write all the sample info to file
+samples.file <- purrr::imap(samples, ~ {
+		if(!is.null(.x)){
+			file <- file.path(dir$output, "samples", 
+						paste0(tolower(.y), ".csv.gz"))
+			data.table::fwrite(.x, file)
+			file
+		} else NA
+}) 
+gses$samples.file <- unlist(samples.file)
 
 ## extract just the info on sample source
 source <- mclapply(samples, function(i){
