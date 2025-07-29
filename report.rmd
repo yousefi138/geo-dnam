@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
 comment = ">",
 error = FALSE,
 tidy = FALSE,
-echo = TRUE, 
+echo = FALSE, 
 warning = FALSE, 
 message = FALSE,
 cache=FALSE)
@@ -43,7 +43,7 @@ While addition eligibility criteria are discussed further below, datasets needed
 
 # Methods
 
-Used functions included in the `geograbi` package to query and extract all data hosted on GEO
+Used functions included in the `geograbi` package (https://github.com/yousefi138/geograbi) to query and extract all data hosted on GEO
 
 Used `geograbi.retrieve.datasets()` to query GEO for experiment records meeting the following selection criteria:
 
@@ -51,15 +51,44 @@ Used `geograbi.retrieve.datasets()` to query GEO for experiment records meeting 
 * DNAm array data available on an omic-level platform (450k, EPIC, EPICv2)
 * N >100
 
-### Human DNAm Array experiments with N>100
+## Human DNAm Array experiments with N>100
 
 N = `r nrow(gses)` experiments meeting our inclusion criteria
 
+Complete metadata about all results is detailed in `gses.csv`
+
 * Of those, N = `r sum(!is.na(gses$filenames))` had a GEO series matrix file, which contains all array, sample and series data for a given experiment, downloadable by `geograbi`
 
-* N = `r sum(gses$class != "error")` series matrix files could be contacted and potentially extracted using `geograbi.get.data()`
-
-	* Occasionally, methylation information is stored in a supplementary file, but retrieval of these was not explored. 
+* N = `r sum(gses$class != "error")` series matrix files could be contacted and DNAm extracted using `geograbi.get.data()`
 	
-	* Manual exception processing can be performed but has not yet been implemented.
+	* All succesfully extracted DNAm matricies are stored in `results/dnam` as `.csv.gz` files
+  
+* Manual exception processing can be performed but has not yet been implemented.
+
+### Blood DNAm data
+
+From the records above with successfully extracted DNAm data, there are N = `r nrow(blood.gses)` experiments where we are confident that measurements for **all samples** were performed in blood.
+
+Complete metadata about this subset is available in `blood.gses.csv`, including paths to all relevant related files. 
+
+For example:
+
+* `dnam.file` - path to the experiment's DNAm data `.csv.gz` file 
+* `samples.file` - path to experiments's sample/patient information data matrix
+
+The total number of samples from these experiments is:
+
+```{r n, echo = T}
+```
+
+
+Histogram of samples per experiment of successfully downloaded GEO experiments to date:
+
+```{r fig.01, fig.width = 8}
+```
+
+The frequency of experiments using each microarray platform was as follows:
+
+```{r table.01}
+```
 

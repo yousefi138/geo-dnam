@@ -22,7 +22,7 @@ source("get-geo-dnam.r", echo=T, max.deparse.length = 500)
 ## methylation predicted proteins and 
 ## tumor vs. normal tissue type. 
 ## render an html summary
-packages <- c("rmarkdown", "knitr", "kableExtra")
+packages <- c("rmarkdown", "knitr", "kableExtra", "tidyverse")
 lapply(packages, require, character.only=T)
 
 render("report.rmd", 
