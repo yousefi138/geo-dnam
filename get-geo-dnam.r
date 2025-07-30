@@ -16,7 +16,7 @@ if(!dir.exists(dir$cache)) dir.create(dir$cache)
 eval.save.dir(dir$cache)
 
 ## check or make all output dirs
-c("series.files", "dnam", "samples") |>
+c("series.files", "dnam", "samples", "supp.files") |>
   sapply(function(.x){
     if (!dir.exists(file.path(dir$output,.x)))
       dir.create(file.path(dir$output,.x), recursive = T)
@@ -80,7 +80,7 @@ gses <- merge(gses, series,
 ## ----get.data -------------------------------------------------------------
 eval.save({
   dnam <- 
-    purr::map2(gses$filenames, gses$accession, ~ {
+    purrr::map2(gses$filenames, gses$accession, ~ {
       path <- file.path(dir$output, "dnam")		
       ret <-tryCatch(geograbi.get.data(filename = .x,
                                        gse = .y,
@@ -123,50 +123,6 @@ gses$dnam.file <-
 		file.path(dir$output, "dnam", 
           paste(tolower(gses$accession), "csv.gz", sep="."))	
 
-## ----supplementary-files------------------------------------------------------
-
-## retrieve supplementary lists for each dataset
-eval.save({
-  mclapply(1:nrow(gses), function(i) {
-    ret = NULL
-    if (gses$class[i] != "error" && gses$nrow[i] == 0) {
-      try({
-        ret = geograbi.list.supplementary.files(gses$accession[i])
-      })
-      ret
-    }})
-}, "supplementary-files", redo=F)
-supp.files <- eval.ret("supplementary-files")
-
-## filename clues that a supplementary file contains normalized DNA methylation data
-## or, if none exists, the raw IDAT files
-omit.patterns <- paste0("(",paste(c("intensities","unmeth","unprocessed","non[-_]+normalized","unnormalized","unnormalised","raw","xlsx","tumor"),collapse="|"),")")
-keep.patterns <- paste0("(",paste(c("normalized","normalised","methylation","processed","beta"),collapse="|"),")")
-
-## uses patterns to guess appropriate supplementary file
-## for datasets without series matrix files
-supp.files = sapply(supp.files, function(files) {
-  keep = files
-  if (length(files) > 0) {
-    keep = files[!grepl(omit.patterns,files,ignore.case=T) & grepl(keep.patterns,files,ignore.case=T)]
-  }
-  if (length(keep) == 0)
-    keep = files[grepl("raw.tar$",files,ignore.case=T)]
-  keep
-})
-
-## omit datasets based on tissue from children or that is not blood
-for (i in which(gses$accession %in% readLines("omit.txt")))
-  supp.files[[i]] = list()
-
-## adhoc corrections
-supp.files[gses$accession == "GSE191082"] = "GSE191082_Normalized_data_Blood.txt.gz"
-supp.files[gses$accession == "GSE74414"] = "GSE74414_all_beta_values.txt.gz"
-supp.files[gses$accession == "GSE198904"] = "GSE198904_DHRC_Matrix_processed.txt.gz;GSE198904_OBSERVEMDD0001_Matrix_processed.txt.gz"
-supp.files[gses$accession == "GSE54882"] = "GSE54882_processed_methylation_matrix.txt.gz"
-stopifnot(all(sapply(supp.files,length) <= 1))
-
-gses$supp.file = sapply(supp.files,function(txt) if (length(txt) == 0) "" else unlist(txt))
 
 # ----blood.pred -------------------------------------------------------------
 ## retrieve sample info for each dataset
@@ -215,10 +171,23 @@ table(gses$blood.pred, useNA = "ifany")
 #FALSE  TRUE  <NA> 
 #  355   120   201 
 
+## adhoc additions
+gses$blood.pred <- (
+  gses$blood.pred
+  | gses$accession %in% c("GSE40279","GSE42861","GSE51032","GSE51057","GSE74548"))
+
+## corrections
+gses$ncol[gses$accession == "GSE42861"] = 689
+gses$ncol[gses$accession == "GSE51032"] = 845
+
+table(gses$blood.pred, useNA = "ifany")
+## FALSE  TRUE  <NA> 
+##   352   125   199 
+
 #str(source[which(gses$blood.pred==F)])
 ## check on count
 #sum(gses[gses$blood.pred == TRUE & !is.na(gses$blood.pred), "ncol"])
-# [1] 48357
+# [1] 51050
 
 ## ----pubmed -------------------------------------------------------------
 eval.save({
@@ -232,6 +201,50 @@ gses <- pubmed |>
                   "pub.title", "abstract")))  %>%
   left_join(gses, ., by = c("pmid"))
 
+## ----supp.files------------------------------------------------------
+
+## retrieve supplementary lists for each dataset
+eval.save({
+  mclapply(1:nrow(gses), function(i) {
+    ret = NULL
+    if (gses$class[i] != "error" && gses$nrow[i] == 0) {
+      try({
+        ret = geograbi.list.supplementary.files(gses$accession[i])
+      })
+      ret
+    }})
+}, "supplementary-files", redo=F)
+supp.files <- eval.ret("supplementary-files")
+
+## filename clues that a supplementary file contains normalized DNA methylation data
+## or, if none exists, the raw IDAT files
+omit.patterns <- paste0("(",paste(c("intensities","unmeth","unprocessed","non[-_]+normalized","unnormalized","unnormalised","raw","xlsx","tumor"),collapse="|"),")")
+keep.patterns <- paste0("(",paste(c("normalized","normalised","methylation","processed","beta"),collapse="|"),")")
+
+## uses patterns to guess appropriate supplementary file
+## for datasets without series matrix files
+supp.files = sapply(supp.files, function(files) {
+  keep = files
+  if (length(files) > 0) {
+    keep = files[!grepl(omit.patterns,files,ignore.case=T) & grepl(keep.patterns,files,ignore.case=T)]
+  }
+  if (length(keep) == 0)
+    keep = files[grepl("raw.tar$",files,ignore.case=T)]
+  keep
+})
+
+## omit datasets known to be based on tissue from children or that is not blood
+for (i in which(gses$accession %in% readLines("omit.txt")))
+  supp.files[[i]] = list()
+
+## adhoc corrections
+supp.files[gses$accession == "GSE191082"] = "GSE191082_Normalized_data_Blood.txt.gz"
+supp.files[gses$accession == "GSE74414"] = "GSE74414_all_beta_values.txt.gz"
+supp.files[gses$accession == "GSE198904"] = "GSE198904_DHRC_Matrix_processed.txt.gz;GSE198904_OBSERVEMDD0001_Matrix_processed.txt.gz"
+supp.files[gses$accession == "GSE54882"] = "GSE54882_processed_methylation_matrix.txt.gz"
+stopifnot(all(sapply(supp.files,length) <= 1))
+
+gses$supp.file = sapply(supp.files,function(txt) if (length(txt) == 0) "" else unlist(txt))
 
 ## ----write.gses -------------------------------------------------------------
 
@@ -245,29 +258,139 @@ data.table::fwrite(
 # subset good blood query results
 blood.gses <- gses |>
   subset(blood.pred == TRUE & !is.na(blood.pred)) |>
-  subset(nrow >300000 | supp.file != "") ## biggest drop off - many 0s
-
-omit.list <- readLines("omit.txt")
+  subset(nrow >300000 | supp.file != "")
 
 data.table::fwrite(
-  blood.gses[!blood.gses$accession %in% omit.list,], 
+  blood.gses,
   file.path(dir$output, "blood.gses.csv"),
   row.names = F,
   na = "NA")
 
-## sum(blood.gses$ncol)
-## [1] 44909
+## ----download.supp.files ----------------------------------------------------------
 
-## plus add these
-##     accession                              supp.file   nrow ncol blood.pred
-## 246 GSE191082 GSE191082_Normalized_data_Blood.txt.gz      0  158      FALSE 144 of which blood
-## 462  GSE40279                                        473035  656      FALSE whole blood
-## 469  GSE42861                                             0    0         NA PBL (n=689)
-## 479  GSE51032                                             0    0         NA buffy coat (n=845)
-## 480  GSE51057                                        485578  329      FALSE buffy coat 
-## 517  GSE59065        GSE59065_MatrixProcessed.csv.gz      0  296      FALSE 100 of which blood
-## 600  GSE74548                                        485513  174      FALSE buffy coat
-##      144+656+689+845+329+100+174=2937
+supp.indices <- which(blood.gses$supp.file != "")
+supp.dir <- file.path(dir$output, "supp.files")
+for (i in supp.indices) {
+  filenames = unlist(strsplit(blood.gses$supp.file[i], ";"))
+  for (filename in filenames) {  
+    if (!file.exists(file.path(supp.dir, filename)))
+      geograbi.download.supplementary.file(
+        path=supp.dir,
+        gse=blood.gses$accession[i],
+        filename=filename)
+  }
+}
 
-## total: 47846
+## ----check.supp.files -------------------------------------------------
 
+supp.filenames <- with(blood.gses, supp.file[grepl("(csv|tsv|txt).gz$", supp.file)])
+supp.filenames <- unlist(strsplit(supp.filenames,";"))
+
+## extract the first few rows of each supplementary file
+dir.create(peak.dir <- file.path(supp.dir, "peak"))
+for (filename in supp.filenames) {
+  if (!file.exists(file.path(peak.dir, filename)))
+    system(paste(
+      "gunzip -c", file.path(supp.dir, filename),
+      "| head -n 5 | gzip -c >", file.path(peak.dir, filename)))
+}
+
+## check the first few rows of each supplementary file
+for (filename in supp.filenames) {
+  cat(date(), " checking supplementary file ", filename, "\n")
+  dat <- fread(file.path(peak.dir, filename), data.table=F)
+  cg.idx = which(colnames(dat) == "ID_REF")
+  cg.idx = ifelse(length(cg.idx) == 0, 1, cg.idx[1])
+  rownames(dat) <- dat[[cg.idx]]
+  dat[[cg.idx]] = NULL
+  dat <- as.matrix(dat[,!grepl("(cpg|pval|id_ref)",colnames(dat),ignore.case=T)])
+  stopifnot(ncol(dat) >= 100)
+  rows <- rownames(dat)
+  stopifnot(!any(is.na(rows)))
+  stopifnot(all(substring(rows,1,2) == "cg"))
+  dat <- apply(dat,2,as.numeric)
+  stopifnot(sum(!is.na(dat)) > ncol(dat))
+}
+
+## ----clean.supp.files -------------------------------------------------
+
+## clean each supplementary file
+supp.filenames <- with(blood.gses, supp.file[grepl("(csv|tsv|txt).gz$", supp.file)])
+supp.filenames <- unlist(strsplit(supp.filenames,";"))
+ids = unique(sub("_.*", "", supp.filenames))
+dir.create(save.dir <- file.path(supp.dir, "clean"))
+for (id in ids) {
+  out.filename <- file.path(save.dir, paste0(tolower(id),".csv.gz"))
+  if (!file.exists(out.filename)) {
+    cat(date(), " cleaning supplementary file and saving to ", out.filename, "\n")
+    is_filename = grepl(paste0(id,"_"), supp.filenames)
+    dats <- lapply(supp.filenames[is_filename], function(filename) {  
+      dat <- fread(file.path(supp.dir, filename), data.table=F)
+      cg.idx = which(colnames(dat) == "ID_REF")
+      cg.idx = ifelse(length(cg.idx) == 0, 1, cg.idx[1])
+      rownames(dat) <- dat[[cg.idx]]
+      dat[[cg.idx]] = NULL
+      dat <- as.matrix(dat[,!grepl("(cpg|pval|id_ref)",colnames(dat),ignore.case=T)])
+      rows <- rownames(dat)
+      dat <- apply(dat,2,as.numeric)
+      rownames(dat) = rows
+      ms <- colMeans(dat,na.rm=T)
+      stopifnot(!all(ms < 0.1)) ## if no samples have normal looking DNAm
+      dat[,ms > 0.1]            ## omit samples with abnormal DNAm
+    })
+    if (length(dats) > 1) {
+      rows <- unlist(lapply(dats,rownames))
+      rows <- names(which(table(rows)==length(dats)))
+      dats <- lapply(dats, function(dat) dat[match(rows,rownames(dat)),])
+      dat <- do.call(cbind, dats)
+    }
+    else dat <- dats[[1]]
+    fwrite(data.frame(cg=rownames(dat), dat, check.names=F), file=out.filename)
+  }
+}
+
+## ----idats.extraction --------------------------------------------------------------------
+
+arc.filenames <- with(blood.gses, supp.file[grepl("_RAW.tar$", supp.file)])
+dir.create(idats.dir <- file.path(supp.dir, "idats"))
+for (filename in arc.filenames) {
+  contents.out <- file.path(idats.dir, sub(".tar",".out",filename))
+  if (!file.exists(contents.out)) {
+    cat(date(), " extracting idats from ", filename, "\n")
+    system(paste("tar -tf", file.path(supp.dir, filename), ">", contents.out))
+    system(paste("tar -xf", file.path(supp.dir, filename), "-C", idats.dir))
+  }
+}
+
+## ----final.counts -------------------------------------------------------------
+
+## number datasets (not)derived from blood with a sufficient number probes
+table(
+  blood=gses$blood.pred,
+  probes300K=gses$nrow > 300000 | gses$supp.file != "")
+##        probes300K
+## blood   FALSE TRUE
+##   FALSE    42  310
+##   TRUE     10  115
+
+## number samples derived from blood and/or with a sufficient number probes
+with(gses, {
+  data.frame(
+    blood=sum(ncol[blood.pred], na.rm=T),
+    probes300K=sum(ncol[nrow > 300000 | supp.file != ""]),
+    both=sum(ncol[blood.pred & (nrow > 300000 | supp.file != "")]))})
+##   blood probes300K  both
+## 1 51050     127685 46068
+
+## number of datasets with data coming from a supplementary file
+table(blood.gses$supp.file != "")
+## FALSE  TRUE 
+##    46    69 
+
+## number of datasets with just idats available
+sum(grepl("_RAW.tar", blood.gses$supp.file))
+## [1] 6
+
+## number of samples with just idats available
+sum(blood.gses$ncol[grepl("_RAW.tar", blood.gses$supp.file)])
+## [1] 5636
