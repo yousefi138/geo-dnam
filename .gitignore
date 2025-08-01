@@ -5,3 +5,7 @@
 
 # Config
 config.yml
+
+# nuisance files
+*.Rhis*
+*._*
