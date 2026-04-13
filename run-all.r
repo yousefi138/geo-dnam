@@ -37,3 +37,15 @@ lapply(packages, require, character.only=T)
 
 render("report.rmd", 
 	output_format = "all")
+
+
+## updates
+## Dec 12, 2025
+## validation datasets
+## * GSE107353 -- 114 of which 12 MLH1 epimutation carriers and 61 lynch syndrome patients
+## * GSE183920 -- 601 bladder cancer cases of which 371 bad outcomes (recurrence or death)
+## * GSE281691 -- 588 of which 272 metabolic liver cancer cases
+## * GSE51032 -- 845 of which 235 later developed breast cancer, 166 colorectal cancer and 20 developed other primary cancers.
+## omitted two blood datasets:
+## * GSE97362, all (235) CHARGE and Kabuki syndrome patients
+## * GSE188949, all (107) cord blood from preterm infants

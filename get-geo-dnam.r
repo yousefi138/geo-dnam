@@ -188,12 +188,12 @@ gses$blood.pred[gses$accession %in% readLines("omit.txt")] = FALSE
 
 table(gses$blood.pred, useNA = "ifany")
 ## FALSE  TRUE  <NA> 
-##   362   115   199 
+##   364   113   199 
 
 #str(source[which(gses$blood.pred==F)])
 ## check on count
 sum(gses[gses$blood.pred == TRUE & !is.na(gses$blood.pred), "ncol"])
-# [1] 40953
+# [1] 40611
 
 ## ----pubmed -------------------------------------------------------------
 eval.save({
@@ -360,7 +360,7 @@ sm.counts = sapply(blood.gses$accession, function(gse) {
   } else 0
 })
 sum(sm.counts)
-## [1] 39622
+## [1] 39278
 
 ## datasets with supplementary data
 supp.counts = system(
