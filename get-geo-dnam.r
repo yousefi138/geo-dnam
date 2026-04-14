@@ -6,7 +6,9 @@ packages <- c(
   "purrr", # for map2)
   "easyPubMed",
   "dplyr",
-  "parallel")
+  "parallel",
+  "meffonym" ## github.com/perishky/meffonym
+)
 lapply(packages, require, character.only=T)
 
 options(mc.cores=20)
@@ -489,6 +491,46 @@ ret = lapply(1:nrow(blood.gses), function(i) {
 blood.gses$counts.file = file.path(counts.dir, basename(blood.gses$dnam.file))
 stopifnot(all(sapply(blood.gses$counts.file, file.exists)))
 
+
+## ----save.methylation.scores-----------------------------------------
+
+scores.dir = file.path(dir$output, "methylation-scores")
+dir.create(scores.dir, showWarnings = F)
+blood.gses$scores.file = file.path(scores.dir, basename(blood.gses$dnam.file))
+
+models = meffonym.models()
+models = setdiff(models, c("grimage", "grimagev2")) 
+
+for (i in 1:nrow(blood.gses)) {
+  in.file = blood.gses$dnam.file[i]
+  studyid = sub(".csv.gz", "", basename(in.file))
+  out.file = blood.gses$scores.file[i]    
+  if (file.exists(out.file)) {
+    cat(date(), " skipping ", studyid, " as scores already exist\n")
+    next
+  }
+  cat(date(), " generating scores for ", studyid, "\n")
+  meth = fread(in.file, data.table=F)
+  rownames(meth) = meth[[1]]
+  meth = as.matrix(meth[,-1])
+  scores = mclapply(
+    models,
+    function(model) {
+      tryCatch({
+        meffonym.score(meth, model)$score
+      }, error=function(e) {
+        rep(NA, ncol(meth))
+      })
+    })
+  scores = do.call(cbind, scores)
+  rownames(scores) = paste(studyid, colnames(meth), sep="-")
+  colnames(scores) = models
+  scores = t(scores)
+  scores = data.frame(model=rownames(scores), scores, check.names=F)
+  fwrite(scores, file=out.file)
+}  
+
+
 ## ----write.gses -------------------------------------------------------------
 
 # full query results
@@ -504,9 +546,5 @@ data.table::fwrite(
   file.path(dir$output, "blood.gses.csv"),
   row.names = F,
   na = "NA")
-
-
-             
-
 
 
