@@ -39,8 +39,7 @@ eval.save({
       "GPL21145", "GPL21145", # EPIC
       "GPL33022")) |> ## 5sec
     subset(organism =="Homo sapiens") |>
-    subset(samples >100)
-  
+    subset(samples >100)  
 }, "gses", redo=F)
 gses <- eval.ret("gses")
 
@@ -51,8 +50,7 @@ eval.save({
   filenames <- geograbi.download.series.files( 
     path = file.path(dir$output, "series.files"),
     gses = gses$accession, 
-    gpls = gses$platform)
-  
+    gpls = gses$platform)  
 }, "filenames", redo=F)
 filenames <- eval.ret("filenames")
 gses$filenames <- ifelse(filenames == "", NA, filenames)
@@ -375,6 +373,7 @@ supp.counts = sub(".* ", "", supp.counts)
 supp.counts = sapply(supp.counts, as.integer)
 sum(supp.counts)
 ## [1] 36089
+## [1] 36589
 
 ## datasets with idat files
 idat.counts = sapply(list.files(file.path(supp.dir, "idats"), "out$", full.names=T), function(filename) {
