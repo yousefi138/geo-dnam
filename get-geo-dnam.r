@@ -185,10 +185,11 @@ gses$ncol[gses$accession == "GSE51032"] = 845
 
 ## adhoc removals
 gses$blood.pred[gses$accession %in% readLines("omit.txt")] = FALSE
+## GSE54882 removed because DNAm adjusted for cell counts and sex so no longer in 0-1 range
 
 table(gses$blood.pred, useNA = "ifany")
 ## FALSE  TRUE  <NA> 
-##   364   113   199 
+##   365   112   199 
 
 #str(source[which(gses$blood.pred==F)])
 ## check on count
@@ -248,7 +249,6 @@ blood.gses$supp.file = sapply(supp.files, function(files) {
 additions = c(
   "GSE191082_Normalized_data_Blood.txt.gz",
   "GSE74414_all_beta_values.txt.gz",
-  "GSE54882_processed_methylation_matrix.txt.gz",
   "GSE89218_Meth_163_matrix_processed.txt.gz",
   "GSE42861_processed_methylation_matrix.txt.gz",
   "GSE201322_RAW.tar",
@@ -491,27 +491,81 @@ blood.gses$counts.file = file.path(counts.dir, basename(blood.gses$dnam.file))
 stopifnot(all(sapply(blood.gses$counts.file, file.exists)))
 
 
-## ----save.methylation.scores-----------------------------------------
+## ----quantile-normalize-dnam-----------------------------------------
 
-scores.dir = file.path(dir$output, "methylation-scores")
-dir.create(scores.dir, showWarnings = F)
-blood.gses$scores.file = file.path(scores.dir, basename(blood.gses$dnam.file))
+common.cpgs = readLines(file.path(paths$output, "common-cpgs.txt"))
+blood.gses = fread(file.path(dir$output, "blood.gses.csv"), data.table=F)
 
-models = meffonym.models()
-models = setdiff(models, c("grimage", "grimagev2")) 
+targets = sapply(1:nrow(blood.gses), function(i) {
+  in.file = blood.gses$dnam.file[i]
+  studyid = sub(".csv.gz","",basename(in.file))
+  eval.save({
+    meth = fread(in.file, data.table=F,tmpdir=dir$cache)
+    rownames(meth) = meth[[1]]
+    meth[[1]] = NULL
+    meth = as.matrix(meth)
+    ## some dataset have a row numbers column as data, remove it
+    ## begin fix
+    maxs = apply(meth,2,max,na.rm=T)
+    if (any(maxs > 1.1))
+      meth = meth[,which(maxs < 1.1)]
+    ## end fix
+    meth = meth[match(common.cpgs, rownames(meth)),]
+    rownames(meth) = common.cpgs
+    normalize.quantiles.determine.target(meth, subset=common.cpgs)
+  }, paste0("quantile-normalization-target-", studyid), redo=F)
+})
+
+target = targets %*% matrix(blood.gses$samples,ncol=1)/sum(blood.gses$samples)
+target = as.vector(target)
+
+qn.dir = file.path(dir$output, "dnam-qn")
+dir.create(qn.dir, showWarnings = F)
+blood.gses$dnam.qn.file = file.path(qn.dir, basename(blood.gses$dnam.file))
 
 for (i in 1:nrow(blood.gses)) {
   in.file = blood.gses$dnam.file[i]
   studyid = sub(".csv.gz", "", basename(in.file))
-  out.file = blood.gses$scores.file[i]    
+  out.file= blood.gses$dnam.qn.file[i]
   if (file.exists(out.file)) {
-    cat(date(), " skipping ", studyid, " as scores already exist\n")
+    cat(date(), " skipping ", studyid, " as quantile normalized file already exists\n")
     next
   }
-  cat(date(), " generating scores for ", studyid, "\n")
-  meth = fread(in.file, data.table=F)
+  cat(date(), " quantile normalizing ", studyid, "\n")
+  meth = fread(in.file, data.table=F, tmpdir=dir$cache)
+  rownames(meth) = meth[[1]]
+  meth[[1]] = NULL
+  meth = as.matrix(meth)
+  stopifnot(max(meth,na.rm=T) < 1.1)
+  norm = normalize.quantiles.use.target(meth, target)
+  rownames(norm) = rownames(meth)
+  colnames(norm) = colnames(meth)
+  fwrite(
+    data.frame(cg=rownames(norm), norm, check.names=F),
+    file=out.file)
+}
+  
+## ----save.methylation.scores-----------------------------------------
+
+save.methylation.scores = function(in.file, studyid, out.file) { 
+  models = meffonym.models()
+  models = setdiff(models, c("grimage", "grimagev2")) 
+  if (file.exists(out.file)) {
+    cat(date(), " skipping", studyid, "as scores already exist\n")
+    return()
+  }
+  cat(date(), " generating scores for", studyid, "\n")
+  meth = fread(in.file, data.table=F, tmpdir=dir$cache)
   rownames(meth) = meth[[1]]
   meth = as.matrix(meth[,-1])
+  if (max(meth[-1,1],na.rm=T) > 1.1) {
+    cat(" removing first column\n")
+    meth=meth[,-1]
+  }
+  if (max(meth[1,-1],na.rm=T) > 1.1) {
+    cat(" removing first row\n")
+    meth=meth[-1,]
+  }
   scores = mclapply(
     models,
     function(model) {
@@ -529,6 +583,25 @@ for (i in 1:nrow(blood.gses)) {
   fwrite(scores, file=out.file)
 }  
 
+scores.dir = file.path(dir$output, "methylation-scores")
+dir.create(scores.dir, showWarnings = F)
+blood.gses$scores.file = file.path(scores.dir, basename(blood.gses$dnam.file))
+for (i in 1:nrow(blood.gses)) {
+  save.methylation.scores(
+    in.file = blood.gses$dnam.file[i],
+    studyid = sub(".csv.gz", "", basename(blood.gses$dnam.file[i])),
+    out.file = blood.gses$scores.file[i])
+}
+
+scores.qn.dir = file.path(dir$output, "methylation-scores-qn")
+dir.create(scores.qn.dir, showWarnings = F)
+blood.gses$scores.qn.file = file.path(scores.qn.dir, basename(blood.gses$dnam.file))
+for (i in 1:nrow(blood.gses)) {
+  save.methylation.scores(
+    in.file = blood.gses$dnam.qn.file[i],
+    studyid = sub(".csv.gz", "", basename(blood.gses$dnam.file[i])),
+    out.file = blood.gses$scores.qn.file[i])
+}
 
 ## ----write.gses -------------------------------------------------------------
 
