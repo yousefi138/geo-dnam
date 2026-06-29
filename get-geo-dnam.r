@@ -493,8 +493,8 @@ stopifnot(all(sapply(blood.gses$counts.file, file.exists)))
 
 ## ----quantile-normalize-dnam-----------------------------------------
 
-common.cpgs = readLines(file.path(paths$output, "common-cpgs.txt"))
-blood.gses = fread(file.path(dir$output, "blood.gses.csv"), data.table=F)
+#common.cpgs = readLines(file.path(paths$output, "common-cpgs.txt"))
+#blood.gses = fread(file.path(dir$output, "blood.gses.csv"), data.table=F)
 
 targets = sapply(1:nrow(blood.gses), function(i) {
   in.file = blood.gses$dnam.file[i]
