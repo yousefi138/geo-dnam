@@ -28,7 +28,7 @@ sourcecode <- grep("report.r$",
 read_chunk(file.path(path, sourcecode))
 ```
 
-# Purpose
+## Purpose
 
 To identify and access all available DNAm datasets provided by the Gene Expression Omnibus (GEO) https://www.ncbi.nlm.nih.gov/geo/.  
 
@@ -41,7 +41,7 @@ While addition eligibility criteria are discussed further below, datasets needed
 ```
 
 
-# Methods
+## Methods
 
 Used functions included in the `geograbi` package (https://github.com/yousefi138/geograbi) to query and extract all data hosted on GEO
 
@@ -57,15 +57,7 @@ N = `r nrow(gses)` experiments meeting our inclusion criteria
 
 Complete metadata about all results is detailed in `gses.csv`
 
-* Of those, N = `r sum(!is.na(gses$filenames))` had a GEO series matrix file, which contains all array, sample and series data for a given experiment, downloadable by `geograbi`
-
-* N = `r sum(gses$class != "error")` series matrix files could be contacted and DNAm extracted using `geograbi.get.data()`
-	
-	* All succesfully extracted DNAm matricies are stored in `results/dnam` as `.csv.gz` files
-  
-* Manual exception processing can be performed but has not yet been implemented.
-
-### Blood DNAm data
+## Blood DNAm data
 
 From the records above with successfully extracted DNAm data, there are N = `r nrow(blood.gses)` experiments where we are confident that measurements for **all samples** were performed in blood.
 
@@ -76,6 +68,11 @@ For example:
 * `dnam.file` - path to the experiment's DNAm data `.csv.gz` file 
 * `samples.file` - path to experiments's sample/patient information data matrix
 
+* Of those, N = `r sum(blood.gses$supp.file == "")` had a GEO series matrix file, which contains all array, sample and series data for a given experiment, downloadable by `geograbi`
+
+* N = `r sum(blood.gses$supp.file != "")` series matrix files did not include array data, 
+  this was obtained from 'supplementary files' and some amount of manual processing due to arbitrary formatting.
+	
 The total number of samples from these experiments is:
 
 ```{r n, echo = T}
@@ -90,5 +87,13 @@ Histogram of samples per experiment of successfully downloaded GEO experiments t
 The frequency of experiments using each microarray platform was as follows:
 
 ```{r table.01}
+```
+
+## Cancer case-control studies
+
+Among the blood DNAm datasets were several which could be 
+used to evaluate cancer (outcome) risk prediction. 
+
+```{r table.cancer}
 ```
 
