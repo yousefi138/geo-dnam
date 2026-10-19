@@ -30,5 +30,5 @@ This script is sourced from `run-all.r`. Details on the worklfow inputs and outp
 
 The main summary of the results is available in the below report file:
 
-* [`report.html`](https://github.com/yousefi138/geo-dnam/blob/main/report.html)
+* [`report.html`](https://htmlpreview.github.io/?https://github.com/yousefi138/geo-dnam/blob/main/report.html)
 
