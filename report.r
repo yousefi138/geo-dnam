@@ -26,7 +26,7 @@ sum(blood.gses$samples)
 ## ----fig.01 -------------------------------------------------------------
 cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#D55E00" )
 
-ggplot(blood.gses, aes(samples)) + 
+ggplot(blood.gses, aes(num.meth)) + 
 	geom_histogram(binwidth = 20, color=cbPalette[4], 
 		fill=cbPalette[4]) +
 	geom_vline(aes(xintercept=100), 

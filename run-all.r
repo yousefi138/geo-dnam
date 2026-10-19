@@ -54,6 +54,7 @@ render("report.rmd",
 ## June 9, 2026
 ## some datasets had missing values for hundreds of DNAm scores
 ## this was due to the many small Waterfield et al. models
+library(data.table)
 fnames = list.files(file.path(dir$output, "methylation-scores"),full.names=T)
 counts = sapply(fnames, function(fname) {
   dat = fread(fname,data.table=F)
@@ -72,9 +73,9 @@ colnames(counts) = sub(".csv.gz","",basename(colnames(counts)))
 ## before removing Waterfield
 sum(counts["before.50%",] < 0.95)
 sum(counts["before.25%",] < 0.95)
-##[1] 47
+##[1] 77
 
 ## after removing Waterfield
 sum(counts["after.50%",] < 0.95)
 sum(counts["after.25%",] < 0.95)
-#[1] 1
+#[1] 4
