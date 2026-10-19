@@ -1,11 +1,12 @@
-#require(meffil)
-#require(parallel)
-#options(mc.cores=20)
-#require(eval.save)
-#eval.save.dir(paths$cache)
-#idats.dir = file.path(paths$output, "supp.files", "idats")
-#save.dir = file.path(paths$output, "supp.files", "clean")
-dir.create(reports.dir <- file.path(paths$output, "normalization-reports"))
+require(meffil)
+require(parallel)
+options(mc.cores=20)
+require(eval.save)
+eval.save.dir(dir$cache)
+supp.dir = file.path(dir$output, "supp.files")
+idats.dir = file.path(supp.dir, "idats")
+supp.clean.dir = file.path(supp.dir, "clean")
+dir.create(reports.dir <- file.path(dir$output, "normalization-reports"))
 
 samplesheet = meffil.create.samplesheet(idats.dir, recursive=T)
 
@@ -97,7 +98,7 @@ norm.objects = eval.save({
 ## normalize dna methylation levels
 for (dname in unique(samplesheet$dataset)) {
   is.dat = samplesheet$dataset == dname
-  meth.filename = file.path(save.dir, paste0(tolower(dname), ".csv.gz"))
+  meth.filename = file.path(supp.clean.dir, paste0(tolower(dname), ".csv.gz"))
   report.filename = file.path(reports.dir, paste0(dname, "-norm.html"))
   if (!file.exists(meth.filename)) {
     meth = meffil.normalize.samples(
